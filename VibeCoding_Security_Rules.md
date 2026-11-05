@@ -158,6 +158,17 @@ const codeChallenge = crypto.createHash("sha256").update(codeVerifier).digest("b
   * Never dynamically switch `session.serialize_handler` at runtime via `ini_set()`.
   * On PHP 8.5, set `fatal_error_backtraces = Off` and keep `phar.readonly = On`.
 
+### Next.js November 2026 Security Release ([nextjs.org/blog/november-2026-security-release](https://nextjs.org/blog/november-2026-security-release))
+* **Mandatory Patched Versions:** Require **`next >= 16.4.5`** (Active LTS) or **`next >= 15.5.29`** (Maintenance LTS) in `package.json` (`NEXT-ADV-001`, plus `>= 14.2.25` / `>= 15.2.3` for `CVE-2025-29927` middleware bypass).
+* **7 Patched Vulnerabilities & Enforced Coding Rules:**
+  1. **`GHSA-mfr8-8qww-v76h` (High — Cross-Tenant Cache Disclosure with `unstable_cache` + `use cache`, `NEXT-ADV-002`):** Never call a public `'use cache'` function that reads root/tenant parameters both directly and from inside `unstable_cache`.
+  2. **`GHSA-vc7v-qv4w-wrv8` (Medium — Nested `use cache` Root-Parameter Disclosure):** In nested `'use cache'` functions reading root parameters (tenant/locale/site), await all inner async dependencies before returning from the outer cached function.
+  3. **`GHSA-rhh4-g77r-r9qj` (Medium — Binary `use cache` Arguments Cache Collision/Poisoning, `NEXT-ADV-003`):** Never pass raw binary objects (`Buffer`, `Uint8Array`, `ArrayBuffer`) as user/account-distinguishing arguments to `'use cache'` functions; serialize them to explicit hex/base64/SHA-256 strings first.
+  4. **Shared Shell Cache Poisoning in Self-Hosted `next start` (Medium):** When running self-hosted `next start` with Cache Components enabled, enable Partial Prefetching and validate dynamic route parameters.
+  5. **`GHSA-pc58-hwjq-p385` (Medium — Stale Compressed `Response` Framing Injection, `NEXT-ADV-005`):** In self-hosted Route Handlers behind HTTP/1.1 reverse proxies, never return an upstream `fetch()` `Response` unchanged (`return await fetch(...)`); construct a new `Response`/`NextResponse` or strip `Content-Encoding` and `Content-Length` headers.
+  6. **`GHSA-f3mh-rxg3-f5g2` (Medium — Edge Route `x-middleware-set-cookie` Exposure, `NEXT-ADV-004`):** In Edge Route Handlers (`runtime = 'edge'`) and Pages Edge API routes, avoid `NextResponse.cookies.set()` for sensitive/HttpOnly cookies (which could leak via `x-middleware-set-cookie` prior to `15.5.29`/`16.4.5`); use `cookies().set()` from `next/headers` or Node.js runtime, and upgrade Next.js.
+  7. **`GHSA-7qx7-33qx-rqx2` (Medium — Image Optimization SVG Rejection Bypass):** Upgrade to `next >= 16.4.5` / `15.5.29` so AVIF misclassification cannot bypass `images.dangerouslyAllowSVG: false`.
+
 ### Node.js October 2026 Security Releases ([nodejs.org](https://nodejs.org/tr/blog/vulnerability/october-2026-security-releases))
 * **Patched Versions:** Use **Node.js `v26.12.1`**, **`v24.22.1` (LTS)**, or **`v22.23.4` (LTS)**.
 * **Key Mitigations:**
