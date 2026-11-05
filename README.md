@@ -166,6 +166,34 @@ const codeChallenge = crypto.createHash("sha256").update(codeVerifier).digest("b
   * **CVE-2026-105483 / CVE-2026-106069 (TLS Bypass):** Normalize hostnames and IPv4 addresses to canonical ASCII before TLS connections.
   * **Undici:** Require `undici >= 7.30.1` (Node 22/24) or `>= 8.12.2` (Node 26).
 
+
+---
+
+## 🔬 Web Security Scanner v2.0 — Advanced Runtime, Browser, Threat Intel & Sandbox Rules
+
+When building or auditing applications alongside **Web Security Scanner v2.0** (10-Module Unified Architecture: 7 Deterministic + 5 AI / Threat-Intel / Headless Browser / Strix Sandbox capabilities), enforce these additional defensive controls:
+
+### 13. DOM XSS Runtime Proof & Headless Browser Hardening (`headless_browser.py` / `browser_service.py`)
+* **SPA & Client-Side DOM Sinks:** Modern SPAs render links, forms, and query parameters dynamically in JavaScript. Never pass URL parameters (`location.search`, `location.hash`), postMessage payloads, or API responses into `innerHTML`, `outerHTML`, `document.write()`, or `insertAdjacentHTML()`. Use `textContent` or `DOMPurify.sanitize()`.
+* **Scope-Locked Headless Browser Isolation:** If your application invokes a headless browser (Chromium / Playwright / Puppeteer) for screenshots, PDF rendering, or scraping:
+  * Run Chromium in an **isolated sidecar container** (`read_only: true`, `cap_drop: ALL`, `no-new-privileges:true`, memory & PID limits) with **zero access** to application secrets, cloud credentials, or Docker sockets.
+  * Route all browser traffic through a **scope-locked outbound proxy** that restricts requests strictly to the authorized target origin (`scheme + host + port`), allows only safe HTTP methods (`GET`, `HEAD`, `OPTIONS`), blocks private/loopback/metadata IPs (`169.254.169.254`, `127.0.0.0/8`, `10.0.0.0/8`), disables WebRTC UDP leaks, and enforces a strict per-session request budget.
+
+### 14. Live Threat Intelligence & Version Fingerprinting Hygiene (`threat_intel.py`)
+* **Suppress Version Banner Leakage:** Remove or obfuscate exact version numbers in `Server`, `X-Powered-By`, `X-AspNet-Version`, and frontend library banners so automated fingerprinters cannot trivially correlate your stack against **OSV**, **NIST NVD**, and **CISA KEV (Known Exploited Vulnerabilities)**.
+* **Continuous KEV & OSV Triage:** Treat any dependency or runtime version appearing in the **CISA KEV** catalog as an immediate release blocker. Separate version-matched advisories (`unverified`) from runtime-confirmed exploitable paths (`confirmed`).
+
+### 15. Autonomous Sandbox & Docker Daemon Isolation (`strix_engine.py` / `docker:dind`)
+* **Never Expose Raw Host `/var/run/docker.sock` to Untrusted Workloads:** Mounting the host Docker socket into a container grants effective `root` access over the host OS and bypasses read-only volume protections (`:ro`) for sibling containers.
+* **Prefer Isolated TLS `docker:dind` (`DOCKER_TLS_VERIFY=1`):** When running dynamic code execution or security sandboxes (such as Strix CLI), use a dedicated `docker:dind` sidecar listening only on `127.0.0.1:2376` with mandatory TLS client certificates, isolated bridge subnets (`10.213.0.0/24`), and a non-root application user (`uid 1000`).
+
+### 16. Local API & Loopback Service Protection (`server.py`)
+* **Defend Localhost Tools Against DNS Rebinding & Drive-By CSRF:** Even when a local server binds to `127.0.0.1`, malicious websites visited in the user's browser can attack it via DNS rebinding or cross-site `fetch()`/`<form>` requests.
+* **Mandatory Per-Boot Token & Origin Checks:** Require a cryptographically random per-boot token header (e.g., `X-WSS-Token` verified via `hmac.compare_digest`), validate `Host` and `Origin` against an explicit loopback allowlist, and reject any request carrying `Sec-Fetch-Site: cross-site`.
+
+### 17. Mandatory Secret Redaction Before External AI/LLM Calls & Persistence (`redaction.py` / `scan_history.py`)
+* **Redact Before Prompting or Logging:** Before sending source code snippets, HTTP headers, or scan findings to any external LLM provider (OpenAI, Gemini, Vertex AI, Anthropic, OpenRouter, Bedrock) or saving them to local SQLite history (`scan_history.py`), pass all text through a deterministic redaction filter (`redact_text()`) that masks API keys (`AIza...`, `sk-...`, `ghp_...`, `AKIA...`), PEM private keys, Bearer/JWT tokens, and connection strings.
+
 ---
 
 ## 🗂️ Full Rule Coverage (146 SAST Rules across 28 Categories)
@@ -206,6 +234,11 @@ const codeChallenge = crypto.createHash("sha256").update(codeVerifier).digest("b
 | **Language Deep Rules** | Go, Rust (`unsafe`), PHP (`include`/`require` LFI), Java (Spring SpEL), C#, TypeScript/JS taint, Python AST taint. |
 | **PHP & Node.js Bulletins**| 21 PHP Advisories (`php2shell` CVE-2026-109618/109619/115560) + 10 Node.js Oct 2026 Advisories (CVE-2026-111497 Brotli RCE). |
 
+| **Headless Browser & DOM XSS (`headless_browser.py`)** | SPA DOM sink execution (`data-wzx-exec` proof), scope-locked proxy enforcement, WebRTC/DNS leak prevention, isolated `cap_drop: ALL` browser sidecar. |
+| **Threat Intel & KEV Correlation (`threat_intel.py`)** | Server/JS version banner exposure, live OSV / NIST NVD / CISA KEV matching, unverified vs. runtime-confirmed triage. |
+| **Sandbox & Docker Daemon Security (`strix_engine.py`)** | Host `/var/run/docker.sock` exposure vs. isolated TLS `docker:dind` (`DOCKER_TLS_VERIFY=1`), non-root container execution. |
+| **Local API & Loopback Hardening (`server.py`)** | Per-boot `X-WSS-Token` (`hmac.compare_digest`), DNS rebinding `Host`/`Origin` validation, `Sec-Fetch-Site: cross-site` blocking. |
+| **LLM & Log Secret Redaction (`redaction.py`)** | Automatic masking of API keys, PEM private keys, JWTs, and high-entropy secrets before LLM prompts or SQLite scan history persistence. |
 </details>
 
 ---
