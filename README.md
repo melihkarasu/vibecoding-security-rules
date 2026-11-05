@@ -194,6 +194,19 @@ When building or auditing applications alongside **Web Security Scanner v2.0** (
 ### 17. Mandatory Secret Redaction Before External AI/LLM Calls & Persistence (`redaction.py` / `scan_history.py`)
 * **Redact Before Prompting or Logging:** Before sending source code snippets, HTTP headers, or scan findings to any external LLM provider (OpenAI, Gemini, Vertex AI, Anthropic, OpenRouter, Bedrock) or saving them to local SQLite history (`scan_history.py`), pass all text through a deterministic redaction filter (`redact_text()`) that masks API keys (`AIza...`, `sk-...`, `ghp_...`, `AKIA...`), PEM private keys, Bearer/JWT tokens, and connection strings.
 
+### 18. Frontend, CDN & Static JavaScript Library CVE Baseline (`js_cve_scanner.py` / `JS-CVE-001` / Retire.js & GHSA)
+* **Audit `<script src>` & Bundled Vendor JS Even Without `package.json`:** Many PHP, Django, Classic ASP/.NET, and static HTML projects load JavaScript directly via `<script src="...">` CDN tags or static `/js/` files without a `package.json`. AI agents MUST verify both `<script src>` URLs and JS file header banners (`/*! jQuery v... */`) against the official **Retire.js (`jsrepository-v4.json`)** and **GitHub Advisory Database (`ecosystem=npm`)** baselines:
+  * **jQuery:** Require `>= 3.5.0` (recommended `>= 3.7.1`). Versions `< 3.5.0` are vulnerable to `jQuery.htmlPrefilter` DOM XSS (`CVE-2020-11022`, `CVE-2020-11023`) and `< 3.4.0` to Prototype Pollution (`CVE-2019-11358`).
+  * **jQuery UI:** Require `>= 1.13.2` (blocks `CVE-2021-41182/41183/41184` Datepicker XSS and `CVE-2022-31160` Checkboxradio XSS).
+  * **Bootstrap:** Require `>= 5.3.3` (or `>= 4.6.2` on v4, `>= 3.4.1` on v3) to prevent `data-target` / `data-template` tooltip/popover DOM XSS (`CVE-2018-14040`, `CVE-2019-8331`).
+  * **DOMPurify:** Require `>= 3.1.6` (or `>= 2.5.6` on v2) to prevent mXSS and DOM Clobbering sanitizer bypasses (`CVE-2024-45801`, `CVE-2024-47875`).
+  * **Lodash & Underscore:** Require `lodash >= 4.17.21` (`CVE-2021-23337` template RCE, `CVE-2020-8203` Prototype Pollution) and `underscore >= 1.13.6` (`CVE-2021-23358` RCE).
+  * **Handlebars:** Require `>= 4.7.8` (`CVE-2021-23369`, `CVE-2021-23383` RCE & Prototype Pollution).
+  * **Axios:** Require `>= 1.7.4` (`CVE-2023-45857` XSRF-TOKEN leakage and `CVE-2024-39338` path-relative SSRF).
+  * **Moment.js:** Require `>= 2.29.4` (`CVE-2022-24785` path traversal and `CVE-2022-31129` ReDoS), or migrate to `Intl.DateTimeFormat` / `date-fns` / `dayjs`.
+  * **Marked, Chart.js & SweetAlert2:** Require `marked >= 4.0.10` (`CVE-2022-21680` ReDoS), `chart.js >= 2.9.4 / 4.4.4` (`CVE-2020-7746` Prototype Pollution), and `sweetalert2 >= 11.6.14`.
+  * **Subresource Integrity (SRI):** Every third-party CDN `<script src="https://...">` tag MUST include `integrity="sha384-..."` and `crossorigin="anonymous"` (without triggering false-positive secret alerts on `sha256-`/`sha384-`/`sha512-` SRI hashes).
+
 ---
 
 ## 🗂️ Full Rule Coverage (146 SAST Rules across 28 Categories)
@@ -239,6 +252,7 @@ When building or auditing applications alongside **Web Security Scanner v2.0** (
 | **Sandbox & Docker Daemon Security (`strix_engine.py`)** | Host `/var/run/docker.sock` exposure vs. isolated TLS `docker:dind` (`DOCKER_TLS_VERIFY=1`), non-root container execution. |
 | **Local API & Loopback Hardening (`server.py`)** | Per-boot `X-WSS-Token` (`hmac.compare_digest`), DNS rebinding `Host`/`Origin` validation, `Sec-Fetch-Site: cross-site` blocking. |
 | **LLM & Log Secret Redaction (`redaction.py`)** | Automatic masking of API keys, PEM private keys, JWTs, and high-entropy secrets before LLM prompts or SQLite scan history persistence. |
+| **Frontend & CDN JS CVEs (`js_cve_scanner.py`)** | `JS-CVE-001` Retire.js + GHSA npm checks on `<script src>` & `.js` banners (jQuery, Bootstrap, DOMPurify, Lodash, Handlebars, Axios, Moment.js, Chart.js, Marked). |
 </details>
 
 ---
