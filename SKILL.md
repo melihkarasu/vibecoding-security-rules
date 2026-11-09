@@ -223,6 +223,14 @@ When building or auditing applications alongside **Web Security Scanner v2.0** (
   * **Marked, Chart.js & SweetAlert2:** Require `marked >= 4.0.10` (`CVE-2022-21680` ReDoS), `chart.js >= 2.9.4 / 4.4.4` (`CVE-2020-7746` Prototype Pollution), and `sweetalert2 >= 11.6.14`.
   * **Subresource Integrity (SRI):** Every third-party CDN `<script src="https://...">` tag MUST include `integrity="sha384-..."` and `crossorigin="anonymous"` (without triggering false-positive secret alerts on `sha256-`/`sha384-`/`sha512-` SRI hashes).
 
+### 19. Self-Contained Skill & Security Rule Reference Integrity (`usestrix/strix` Discipline)
+* **No Broken or Unbundled Reference Links in `SKILL.md` / Agent Rules:** As established in `usestrix/strix` (`docs(skills): stop linking reference files that are not in the repo`), AI coding rules, `SKILL.md` files, and `.cursorrules` / `CLAUDE.md` prompts MUST NOT link to local/relative reference files that are not committed inside the repository.
+* **Anti-Hallucination & Self-Contained Context:** Every security rule, CVE baseline, and defensive code pattern referenced by an AI agent skill must be self-contained in the repository so agents never hallucinate missing guidance or fail tool reads during autonomous code generation.
+
+### 20. Resource Exhaustion, DAG Traversal & Pinning Quota Guards (`CVE-2026-62300` / `GHSA-m5ph-mmg5-6w5h` / `WEB3-PIN-001`)
+* **Enforce Mandatory Depth, Node & Quota Limits:** In IPFS/Filecoin/DAG pinning endpoints, recursive JSON/AST/GraphQL traversal, and archive/tree extraction handlers, AI-generated code MUST enforce explicit **`maxDepth`**, **`maxNodes`**, **`maxBytes` (quota)**, and **`AbortSignal.timeout()`** limits to prevent unbounded DAG pinning and server resource exhaustion DoS (`CVE-2026-62300` in `filecoin-pin`).
+* **Dependency & Schema Validation Baselines (`SCA-ADV-001` / `SCA-ADV-002`):** Require **`filecoin-pin >= 1.1.1`** across `package.json`, `package-lock.json`, and `pnpm-lock.yaml`, and keep schema validation libraries such as **`zod >= 3.23.8`** (`CVE-2023-4316`) on their latest patched releases (matching `RetireJS/retire.js` repository schema hardening).
+
 ---
 
 ## 🗂️ Full Rule Coverage (146 SAST Rules across 28 Categories)
