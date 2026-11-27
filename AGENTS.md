@@ -259,12 +259,31 @@ When building or auditing applications alongside **Web Security Scanner v2.0** (
 * **Strict YAML Frontmatter in Skill Documents (`SnailSploit/Claude-Red PR #67`):** Every agent skill file (`SKILL.md`) MUST begin with a valid, closed YAML frontmatter block (`--- ... ---`) defining required `name` and `description` fields. Missing or unclosed frontmatter prevents autonomous agent loaders from discovering and indexing security skills.
 * **Finding-First & Patch-Review Remediation Workflow (`usestrix/strix b1dfe05 / cce6892 / a1ccf77`):** In autonomous AI security and auditing pipelines, always record and persist the confirmed vulnerability finding (with an immutable ID and context) BEFORE generating any remediation code. Delegate remediation tasks by concrete context (target file, CWE, reproduction proof) rather than fixed agent personas, and run automated verification on every generated patch (checking for empty diffs, secret leaks, and new dangerous sink regressions) before attaching the patch to the finding.
 
+### 29. WordPress Plugin Unsafe Deserialization & PHP Object Injection (`CVE-2026-134481` / `CVSS 9.8` / `CWE-502`)
+* **Never Pass User Input to `unserialize()` in Membership & Auth Handlers:** In WordPress environments, plugins, and custom themes (specifically Ultimate Member `<= 2.14.1`), unauthenticated attackers can supply crafted serialized strings through request parameters, headers, or cookies. When passed to PHP `unserialize()`, vulnerable magic methods (`__destruct`, `__wakeup`, `__toString`) trigger arbitrary object injection, full Account Takeover (ATO), and Remote Code Execution (RCE).
+* **Enforce Patched Plugins & Safe JSON Storage:** Immediately upgrade **`ultimate-member >= 2.14.2`** (`CVE-2026-134481`). For all custom plugin code and WordPress metadata storage, replace `serialize()` / `unserialize()` with `json_encode()` and `json_decode()`, or strictly enforce `unserialize($data, ['allowed_classes' => false])`.
+
 ---
 
-## 🗂️ Full Rule Coverage (146 SAST Rules across 28 Categories)
+## 📚 Deep Modular References
+
+For specialized domains, detailed architectural guidance, and copy-pasteable defensive patterns, refer to the on-demand reference guides:
+
+| Reference Module | Domain & Key Defenses |
+| :--- | :--- |
+| **[`references/auth-session-ato.md`](references/auth-session-ato.md)** | Password reset hardening, Host header poisoning prevention, CSPRNG tokens, OAuth 2.0/OIDC PKCE, SAML XSW defense, constant-time verification. |
+| **[`references/api-graphql-grpc-ws.md`](references/api-graphql-grpc-ws.md)** | BOLA/IDOR prevention, GraphQL depth/batching caps, fintech decimal precision, gRPC TLS/reflection, CSWSH WebSocket origin validation. |
+| **[`references/frontend-dom-browser.md`](references/frontend-dom-browser.md)** | DOM XSS sinks, Sanitizer API, safe `postMessage` origin checks, DOM Clobbering defense, CSP framing rules, CSPT prevention. |
+| **[`references/frameworks-2026.md`](references/frameworks-2026.md)** | Next.js Server Actions & Image Optimizer SSRF, Laravel Eloquent mass assignment & Blade XSS, Spring Boot Actuator, ASP.NET ViewState MAC, 2026 PHP/Node.js/MySQL advisories. |
+| **[`references/ai-llm-rag-mcp.md`](references/ai-llm-rag-mcp.md)** | Direct & indirect prompt injection, RAG multi-tenant isolation, MCP tool execution guardrails, bounded agent loops, LLM output sanitization. |
+| **[`references/cicd-cloud-k8s.md`](references/cicd-cloud-k8s.md)** | GitHub Actions PwnRequest/OIDC trust policies, AWS S3 public block, EC2 IMDSv2 enforcement, wildcard IAM defense, Docker/K8s non-root privileges. |
+| **[`references/business-logic-race.md`](references/business-logic-race.md)** | Concurrency & TOCTOU atomic updates, `Idempotency-Key` constraints, integer currency minor units, server-side CAPTCHA, safe file uploads. |
+| **[`references/defensive-patterns-by-lang.md`](references/defensive-patterns-by-lang.md)** | Concrete secure idioms for Python, TypeScript/JavaScript, PHP, Go, Java, C#, and Rust. |
+
+## 🗂️ Full Rule Coverage (164 SAST Rules across 33 Categories)
 
 <details>
-<summary><strong>Click to expand all 28 audited security categories</strong></summary>
+<summary><strong>Click to expand all 33 audited security categories</strong></summary>
 
 <br>
 
@@ -297,7 +316,12 @@ When building or auditing applications alongside **Web Security Scanner v2.0** (
 | **Desktop & Local IPC** | Electron `nodeIntegration: true` or `contextIsolation: false`. |
 | **Log Hygiene** | Logging plaintext passwords, tokens, API keys, or returning raw stack traces to clients. |
 | **Language Deep Rules** | Go, Rust (`unsafe`), PHP (`include`/`require` LFI), Java (Spring SpEL), C#, TypeScript/JS taint, Python AST taint. |
-| **PHP & Node.js Bulletins**| 21 PHP Advisories (`php2shell` CVE-2026-109618/109619/115560) + 10 Node.js Oct 2026 Advisories (CVE-2026-111497 Brotli RCE). |
+| **PHP & Node.js Bulletins**| 21 PHP Advisories (`php2shell` CVE-2026-109618/109619/115560) + 10 Node.js Oct 2026 Advisories (CVE-2026-111497 Brotli RCE) + WordPress Ultimate Member (`CVE-2026-134481` CVSS 9.8 PHP Object Injection). |
+| **Frameworks (Next.js / Laravel / SAML)** | Next.js Image Optimizer SSRF (`NEXT-001`), Server Action Mass Assignment (`NEXT-002`), Laravel `$guarded = []` (`LARAVEL-001`), Blade unescaped output (`LARAVEL-002`), SAML signature bypass (`FW-003`), ViewState MAC (`FW-002`). |
+| **AI, LLM, RAG & MCP Security** | RAG multi-tenant vector isolation (`AI-SEC-006`), Indirect Prompt Injection in system prompts (`AI-SEC-007`), Bounded agent loops (`AI-SEC-008`), MCP tool shell/eval injection (`AI-SEC-009`), LLM Markdown DOM XSS (`AI-SEC-010`). |
+| **Cloud IAM & IaC Security** | AWS S3 public bucket ACL (`CLOUD-001`), EC2 IMDSv1 mandatory upgrade (`CLOUD-002`), Wildcard IAM policy (`CLOUD-003`), GitHub Actions OIDC wildcard trust (`CLOUD-004`), Insecure gRPC channel/reflection (`CLOUD-005`). |
+| **Weak Crypto & Timing Attacks** | Predictable PRNG in security token generation (`CRYPTO-006`), Non-constant-time signature/token comparison (`CRYPTO-007`). |
+| **Offline HAR & Triage Engine** | Passive HTTP Archive auditing (`har_analyzer.py`), 7-Question Validation Gate & compound risk chains (`ai_orchestrator.py`), Bugcrowd VRT & Executive reporting (`report_exporter.py`), Defensive MCP Server (`mcp_server.py`). |
 
 | **Headless Browser & DOM XSS (`headless_browser.py`)** | SPA DOM sink execution (`data-wzx-exec` proof), scope-locked proxy enforcement, WebRTC/DNS leak prevention, isolated `cap_drop: ALL` browser sidecar. |
 | **Threat Intel & KEV Correlation (`threat_intel.py`)** | Server/JS version banner exposure, live OSV / NIST NVD / CISA KEV matching, unverified vs. runtime-confirmed triage. |
