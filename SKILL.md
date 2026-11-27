@@ -344,5 +344,6 @@ This security ruleset and AI agent skill was built from the vulnerability detect
 
 * **Engine:** **[Web Security Scanner](https://github.com/melihkarasu/web-security-scanner)** — Zero-dependency web security, 7-language SAST (146 rules), 16 DAST modules, 8-ecosystem OSV CVE, and AI Red Team auditing suite developed by **[Melih Karasu](https://github.com/melihkarasu)**.
 * **Offensive Methodologies & Playbooks:** **[Claude-Red](https://github.com/SnailSploit/Claude-Red)** — Offensive security skills and red team playbooks by **[SnailSploit](https://github.com/SnailSploit)** (Kai Aizen).
+* **Bug Bounty Patterns & Triage Framework:** **[Claude-BugHunter](https://github.com/elementalsouls/Claude-BugHunter)** — 85 skills, 681 disclosed report patterns, VRT-aware triage gates, and external red team methodologies by **[Sachin Sharma](https://github.com/elementalsouls)**.
 * **Portfolio Ecosystem:** **[VibeCodedApps](https://github.com/melihkarasu/VibeCodedApps)** ([app.melihkarasu.com](https://app.melihkarasu.com))
 * **Standards & Bulletins:** OWASP Top 10, CWE / SANS Top 25, [Official PHP 2026 Security Advisories](https://www.php.net/archive/2026.php), [Official Node.js Security Releases](https://nodejs.org/tr/blog/vulnerability/october-2026-security-releases), and [Google OSV](https://osv.dev/).
